@@ -11,8 +11,14 @@ node_modules/
 __pycache__/
 *.pyc
 *.pyd
+.pixi
+.ruff_cache/
 
 # Ignore virtual environments
 .venv/
 venv/
 
+# private files
+*.env
+.env.*
+ComputerMachine.md

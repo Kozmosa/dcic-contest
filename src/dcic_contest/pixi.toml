@@ -1,0 +1,16 @@
+[workspace]
+authors = ["Kozmosa <kozmosa@proton.me>"]
+channels = ["conda-forge"]
+name = "dcic_contest"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.11.*"
+pandas = ">=3.0.1,<4"
+numpy = ">=2.4.3,<3"
+scikit-learn = ">=1.8.0,<2"
+matplotlib = ">=3.10.8,<4"
+seaborn = ">=0.13.2,<0.14"
