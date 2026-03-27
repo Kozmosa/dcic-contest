@@ -21,4 +21,4 @@ venv/
 # private files
 *.env
 .env.*
-ComputerMachine.md
+docs/ComputeMachine.md
