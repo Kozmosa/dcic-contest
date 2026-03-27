@@ -66,7 +66,8 @@ All engineering conventions from `docs/ProjectBasis.md` apply.
 
 - Python version: `3.11`
 - Package/environment management: `pixi` + `uv`
-- Virtual environment path: `dcic-contest/.venv`
+- Runtime default: prefer `pixi run ...` or the Python interpreter provided by the `pixi` environment for training, backtest, prediction, and experiment scripts.
+- Current `pixi` project root: `src/dcic_contest/`
 - Production code should include type annotations.
 - Type checking target: `standard`
 - Main workflows must be scriptable and must not depend on notebooks.
@@ -106,6 +107,12 @@ For experiments, use the naming convention from `docs/ProjectBasis.md`:
 - `MMDD_HHMMSS_<commit_hash_6>`
 - `MMDD_HHMMSS_<commit_hash_6>_<Remark>`
 
+Current experiment practice in this repository:
+
+- Formal experiment runs should be written under `experiments/<exp>/` instead of root `artifacts/`.
+- Experiment directories may contain `configs/`, `metrics/`, `results/`, `artifacts/`, and optional `logs/`.
+- When running forecasting experiments or generating prediction files, prefer the scriptable experiment entrypoints and keep outputs inside the corresponding experiment directory.
+
 ## Task 1 Modeling Rules
 
 When working on charging load forecasting, agents should follow these default rules unless the user explicitly requests another approach.
@@ -124,6 +131,13 @@ Recommended early baseline order:
 3. weekday-slot historical mean baseline
 4. GBDT baselines such as LightGBM, CatBoost, or XGBoost
 5. deeper sequence models only after a stable offline validation pipeline exists
+
+Current implemented baseline status:
+
+- Rule baselines implemented: `last_day_same_slot`, `last_7day_same_slot`, `weekday_slot_mean`
+- GBDT baselines under active development: `lightgbm_recursive`, `lightgbm_direct`
+- Current GBDT feature layer may include safe `TIME`-derived features, historical `V` lag / rolling features, same-weekday-slot statistics, same-slot recent-day statistics, and documented holiday-related calendar flags
+- High leakage-risk daily summary fields such as `AVGV/MAXV/MAXT/MINV/MINT/AVGS/MAXS/MINS/SPAN` remain disallowed in first-line forecasting baselines unless the user explicitly requests a reviewed exception and the leakage risk is addressed
 
 ## Task 2 And Task 3 Working Rules
 
@@ -184,6 +198,7 @@ If the user does not specify a direction, prefer the following defaults:
 - first deliverable: reproducible baseline plus legal submission export
 - first model family to strengthen: GBDT
 - first extension after baseline stability: external public weather data with documented provenance
+- for runnable experiments, default to creating a new `experiments/<exp>/` directory and executing through `pixi run`
 
 ## Non-Goals And Cautions
 
