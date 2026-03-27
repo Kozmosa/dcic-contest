@@ -1,0 +1,18 @@
+# Ignore Mac system files
+.DS_Store
+
+# Ignore node modules
+node_modules/
+
+# Ignore pt files
+*.pt
+
+# Ignore python caches
+__pycache__/
+*.pyc
+*.pyd
+
+# Ignore virtual environments
+.venv/
+venv/
+

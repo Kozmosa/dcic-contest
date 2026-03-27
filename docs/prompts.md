@@ -1,0 +1,7 @@
+# Init Project Basis
+
+我们通过交互式的方式来确定本工程的基本约束. 项目采用python3.11+pytorch+sklearn, 使用pixi+uv作为包管理器, 虚拟环境创建在dcic-contest/.venv, 需要类型注解, 类型检查严格程度为standard; docs目录存放项目文档, LLM生成的文档文件(markdown)存放在docs/agentic-working目录中, 完成每次修改(粒度大小为一个prompt, 不是每个patch追加, 而是完成一整个任务之后追加)之后, 需要将所做的更改缩到一行, 按照更改时间+更改内容的形式, 追加到当日的worklog markdown当中(文件类似: docs/agentic-working/worklog/20260327.md); 每次做了较大范围的更改(eg. 增加新模块/新特性/大型重构/数据结构修改/api接口修改), 需要增加一个专门的文档描述具体实现(eg. docs/agentic-working/impls/WebServerImpl0327.md), 如果对项目的共用约束有更改的, 需要更新共用文档(eg. docs/agentic-working/DataStructure.md); conf目录存放项目的配置文件(使用toml); artifacts目录存放正式运行run的产物; scripts用于存放项目的ci/lint/之类的脚本; tests目录用于存放项目的单元测试和集成测试文件; reports目录用于存放项目的报告文件(markdown), release版本的report才会放在里面; submissions目录整理不同release的交付物(eg. 报告:submissions/0327v1/reports/, 代码:submissions/0327v1/code/, 交付物模型/预测结果:submissions/0327v1/artifacts/); data目录存放所需的数据; experiments目录存放每一次实验的相关文件, 定义每个实验的根目录都使用日期+时间戳+当前实验代码的commit_hash前六位命名, 同时接受可选的语义化备注后缀(eg. experiments/0327_144032_3fb635_LRSearch, experiments/0327_144222_3fb635) 包括配置文件(实验根目录下, toml), 实验脚本文件(实验根目录下), 实验日志(实验根目录/logs), 实验结果(实验根目录/results), 实验产生的模型(实验根目录/artifacts), 实验产生的数据记录(实验根目录/metrics)等
+
+# Init Communication Basis
+
+我们现在开始通过交互式的方式来编写docs/CommunicationBasis.md, 确定用户与LLM交谈的的模式. 一般情况下用户会使用中文和英文两种语言, 如果用户使用中文提出要求, 请在开始回答问题之前, 先用自己的语言/自己的理解复述一遍用户的需求, 再开始回答问题, 解决需求; 如果用户使用英文提出要求, 则先直接给出用户说的话纠正语法错误/最小侵入式修改改为地道英语表达之后的版本, 然后再开始回答问题/解决需求. 注意, 不管用户使用中文还是英文提问, assistant的答复都应该使用中文
