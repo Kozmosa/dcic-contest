@@ -16,6 +16,13 @@ if str(SRC) not in sys.path:
 from dcic_contest.evaluation import EvaluationConfig, run_backtest
 
 
+def _parse_model_names(raw: str | None) -> list[str] | None:
+    if raw is None:
+        return None
+    names = [item.strip() for item in raw.split(",") if item.strip()]
+    return names or None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run Task 1 rolling backtest baselines."
@@ -33,6 +40,11 @@ def main() -> int:
     parser.add_argument("--encoding", default="gb18030")
     parser.add_argument("--horizon-steps", type=int, default=96)
     parser.add_argument("--n-folds", type=int, default=3)
+    parser.add_argument(
+        "--models",
+        default=None,
+        help="Comma-separated baseline names to run. Defaults to all built-in baselines.",
+    )
     args = parser.parse_args()
 
     summary = run_backtest(
@@ -42,6 +54,7 @@ def main() -> int:
             encoding=args.encoding,
             horizon_steps=args.horizon_steps,
             n_folds=args.n_folds,
+            baseline_names=_parse_model_names(args.models),
         )
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
