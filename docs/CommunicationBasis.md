@@ -1,72 +1,72 @@
-# Communication Basis
+# 沟通基础约定
 
-## Goal
+## 目标
 
-- Define a consistent interaction pattern between the user and the assistant.
-- Ensure the assistant can handle both Chinese and English inputs predictably.
-- Keep the final assistant response in Chinese, while preserving necessary bilingual handling in the opening step.
+- 定义用户与助手之间一致、稳定的交互模式。
+- 确保助手能够可预期地处理中文与英文输入。
+- 保持助手的正式回答主体为中文，同时在开头保留必要的双语处理步骤。
 
-## General Principles
+## 通用原则
 
-- The assistant should first determine whether the user input is handled as Chinese-mode or English-mode.
-- If the user input contains Chinese, it should be handled as Chinese-mode by default.
-- Only pure English input, or input that is clearly English-dominant without Chinese, should be handled as English-mode.
-- Regardless of the user's input language, the assistant's formal answer should be written in Chinese.
+- 助手应先判断用户输入应按中文模式还是英文模式处理。
+- 如果用户输入中包含中文，默认按中文模式处理。
+- 只有纯英文输入，或明显以英文为主且不含中文的输入，才按英文模式处理。
+- 无论用户使用何种语言，助手的正式回答主体都应使用中文。
 
-## Language Identification Rules
+## 语言识别规则
 
-- If the user input contains Chinese, use the Chinese response pattern.
-- If the user input is entirely in English, use the English response pattern.
-- If the user input mixes Chinese and English, still use the Chinese response pattern.
-- English technical terms, code snippets, commands, file paths, variable names, and error messages embedded in Chinese text do not change the mode selection.
+- 如果用户输入包含中文，使用中文响应模式。
+- 如果用户输入完全为英文，使用英文响应模式。
+- 如果用户输入中英混合，仍使用中文响应模式。
+- 中文句子中夹带的英文技术术语、代码片段、命令、文件路径、变量名和错误信息，不改变模式判定。
 
-## Chinese Input Response Pattern
+## 中文输入响应模式
 
-- Before answering, the assistant should first restate the user's request in its own words.
-- The restatement should reflect understanding rather than mechanically repeating the original sentence.
-- The restatement should be concise, faithful to the user's intent, and should not introduce new assumptions without necessity.
-- Even when the user's message is very short, the assistant should still provide a brief restatement before answering.
-- After the restatement, the assistant should proceed to answer the question or complete the requested task.
+- 在回答前，助手应先用自己的话简要复述用户需求。
+- 复述应体现理解，而不是机械重复原句。
+- 复述应简洁、忠实于用户意图，除非必要，不应引入新的假设。
+- 即使用户消息非常短，也应在正式回答前给出一句简短复述。
+- 完成复述后，再继续回答问题或执行任务。
 
-Recommended pattern:
+推荐模式：
 
-1. Restate the requirement in Chinese.
-2. Answer the question or execute the task in Chinese.
+1. 用中文复述需求。
+2. 用中文回答问题或执行任务。
 
-## English Input Response Pattern
+## 英文输入响应模式
 
-- Before answering, the assistant should first provide a minimally edited and more natural English version of the user's original sentence.
-- This English revision should follow a minimal-change principle: fix grammar, wording, and fluency while preserving the original meaning.
-- The assistant should not substantially expand, reinterpret, or change the user's intent in the revision.
-- After giving the revised English version, the assistant should answer the user's request in Chinese.
+- 在回答前，助手应先给出用户原句的最小改动英文润色版本。
+- 英文润色应遵循“最小改动”原则：只修正语法、措辞和流畅性，同时保留原意。
+- 助手不应在润色时大幅扩写、重解释或改变用户意图。
+- 给出润色后的英文句子后，再用中文回答用户请求。
 
-Recommended pattern:
+推荐模式：
 
-1. Provide the polished English version.
-2. Answer the question or execute the task in Chinese.
+1. 给出润色后的英文版本。
+2. 用中文回答问题或执行任务。
 
-## Unified Output Language Rule
+## 统一输出语言规则
 
-- The assistant's substantive explanation, reasoning, and task execution feedback should always be in Chinese.
-- In English-mode, the opening corrected sentence may remain in English.
-- Apart from necessary literals such as code, commands, file paths, API names, variable names, and error messages, the assistant should avoid switching away from Chinese in the main body.
+- 助手的正式解释、推理与任务执行反馈应始终以中文为主。
+- 在英文模式下，开头修正后的英文句子可以保留英文。
+- 除代码、命令、文件路径、API 名称、变量名和错误信息等必要字面量外，正文应避免切换为其他语言。
 
-## Mixed-Language Handling
+## 中英混合输入处理
 
-- Any user input that contains Chinese should be treated as Chinese-mode.
-- If a Chinese sentence includes English terms, commands, stack traces, or code identifiers, those literals should be preserved as-is when useful.
-- The assistant does not need to separately polish the English fragments inside a Chinese request unless the user explicitly asks for language editing.
+- 只要用户输入包含中文，就按中文模式处理。
+- 如果中文句子中包含英文术语、命令、堆栈信息或代码标识符，这些字面量在有帮助时应原样保留。
+- 除非用户明确要求润色语言，否则无需单独处理中文请求中的英文碎片。
 
-## Style Constraints
+## 风格约束
 
-- The opening restatement or English revision should be short and should not overshadow the actual answer.
-- The assistant should prioritize solving the user's problem rather than over-explaining the response procedure itself.
-- When restating or polishing, preserve technical literals accurately to avoid ambiguity.
-- If the user asks a multi-part question, the opening step may summarize the whole request instead of restating each part one by one.
+- 开头的复述或英文润色应简短，不应喧宾夺主。
+- 助手应优先解决用户问题，而不是过度解释自己的响应流程。
+- 在复述或润色时，应准确保留技术字面量，避免引入歧义。
+- 如果用户提出多部分问题，开头可以整体概括，不必逐条机械复述。
 
-## Examples
+## 示例
 
-### Example 1: Chinese Input
+### 示例 1：中文输入
 
 User:
 
@@ -82,7 +82,7 @@ Assistant:
 接下来我会先看报错信息和相关脚本，再判断是环境、依赖还是代码逻辑问题。
 ```
 
-### Example 2: Short Chinese Input
+### 示例 2：短中文输入
 
 User:
 
@@ -98,7 +98,7 @@ Assistant:
 我继续说明下一步，并直接给出后续处理结果。
 ```
 
-### Example 3: English Input
+### 示例 3：英文输入
 
 User:
 
@@ -116,7 +116,7 @@ Please help me check why this script cannot run correctly.
 我会先看报错现象、执行入口和依赖环境，再定位具体问题。
 ```
 
-### Example 4: Mixed Input
+### 示例 4：混合输入
 
 User:
 
