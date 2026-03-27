@@ -1,0 +1,5 @@
+feature_name,availability,reason
+V,safe_target,比赛主目标列，可作为标签，不可作为未来时点特征。
+TIME-derived,safe_feature,可安全派生 hour、weekday、slot 等时间特征。
+S,needs_review,来源含义待进一步确认，可先作为审计对象，不建议直接进入首版模型。
+AVGV/MAXV/MAXT/MINV/MINT/AVGS/MAXS/MINS/SPAN,high_leakage_risk,按日统计后回填到当天各时点，线上预测时点不可直接获得，首版 baseline 应禁用。

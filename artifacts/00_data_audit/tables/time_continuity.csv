@@ -1,0 +1,2 @@
+senid,expected_start_time,expected_end_time,expected_points,actual_points,duplicate_time_count,duplicate_key_count,bad_gap_count,min_daily_slot_count,max_daily_slot_count,continuity_pass
+1001-1012,2024/1/1 0:00,2024/10/31 23:45,29280,29280,0,0,0,96,96,True
