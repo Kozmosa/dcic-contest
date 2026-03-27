@@ -32,7 +32,8 @@ Day 1：规则确认 + 数据审计 + baseline 跑通
 [x] 建立 data / conf / src / scripts / reports / artifacts / submissions 目录
 [x] 固定 CLI 主入口
 [x] 固定配置文件组织方式
-[] 固定模型、日志、预测结果输出路径
+[x] 固定模型、日志、预测结果输出路径
+注：实验过程中的模型、日志、预测结果应存放在对应 `experiments/<exp>/` 目录下；根目录 `artifacts/` 用于存放项目不同阶段的正式产出（如 `00_data_audit`、`xx_final_prediction`）。
 [] 建立实验记录模板
 4. 验证体系最小版本
 [x] 编写 RMSE 评估脚本
