@@ -35,11 +35,11 @@ Day 1：规则确认 + 数据审计 + baseline 跑通
 [] 固定模型、日志、预测结果输出路径
 [] 建立实验记录模板
 4. 验证体系最小版本
-[] 编写 RMSE 评估脚本
-[] 建立 rolling-origin backtest 基础版
-[] 至少支持 3 个 fold
-[] 输出每个 fold 的指标
-[] 汇总 overall 指标
+[x] 编写 RMSE 评估脚本
+[x] 建立 rolling-origin backtest 基础版
+[x] 至少支持 3 个 fold
+[x] 输出每个 fold 的指标
+[x] 汇总 overall 指标
 5. Baseline 跑通
 [] 跑通前一天同槽位 baseline
 [] 跑通前7天同槽位 baseline

@@ -12,6 +12,7 @@
 - 新增审计核心模块：`src/dcic_contest/data_audit.py`
 - 新增运行脚本：`scripts/run_data_audit.py`
 - 新增默认配置：`conf/data_audit/task1_default.toml`
+- 将数据审计流程接入 `src/dcic_contest/pixi.toml` 的 `data-audit` task
 - 新增审计说明文档与产物输出
 
 ## 审计设计
@@ -51,6 +52,11 @@
 - `artifacts/00_data_audit/tables/*.csv`：结构化统计表
 - `artifacts/00_data_audit/figures/*.svg`：核心图表
 
+### 运行入口
+
+- 直接运行：`python3 scripts/run_data_audit.py`
+- 统一环境入口：在 `src/dcic_contest/` 目录下执行 `pixi run data-audit`
+
 ## 当前实现结论摘要
 
 - 训练数据时间连续，无重复时间和断点。
@@ -64,3 +70,8 @@
 - 将该审计脚本纳入正式 CLI 主流程的前置步骤。
 - 在 baseline 与 backtest 实现中直接复用 `artifacts/00_data_audit/tables/feature_availability.csv` 和 `summary.json`。
 - 后续可扩展节假日分层统计、异常日复核与 weather 接入前的对齐审计。
+
+## 后续集成进展
+
+- 已新增 `scripts/run_backtest.py` 与 `src/dcic_contest/evaluation.py`，补齐 Day 1 所需的最小 `RMSE` 与 rolling-origin backtest 基线验证能力。
+- 已新增 `pixi run backtest-baselines` 统一入口，便于在固定环境中复现 3-fold baseline 回测结果。

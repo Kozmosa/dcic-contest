@@ -19,6 +19,11 @@
 - 图表：`artifacts/00_data_audit/figures/`
 - 实现说明：`docs/agentic-working/impls/20260327_task1_data_audit.md`
 
+## 运行方式
+
+- 直接脚本入口：`python3 scripts/run_data_audit.py`
+- 统一 `pixi` 入口：在 `src/dcic_contest/` 目录下执行 `pixi run data-audit`
+
 ## 直接结论
 
 - 数据已经具备 Day 1 baseline 与 rolling-origin backtest 的基础条件。

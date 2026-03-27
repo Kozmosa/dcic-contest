@@ -53,6 +53,13 @@ class AuditConfig:
     expected_interval_minutes: int = 15
 
 
+@dataclass
+class Task1DataBundle:
+    chinese_header: list[str]
+    english_header: list[str]
+    rows: list[dict[str, Any]]
+
+
 def _parse_float(value: str) -> float | None:
     text = value.strip()
     if text == "":
@@ -110,6 +117,25 @@ def _read_training_rows(
                 item[column] = _parse_dt(str(item[column]))
             rows.append(item)
     return chinese_header, english_header, rows
+
+
+def load_task1_training_data(
+    input_csv: Path,
+    encoding: str = "gb18030",
+) -> Task1DataBundle:
+    chinese_header, english_header, rows = _read_training_rows(
+        AuditConfig(
+            input_csv=input_csv,
+            submit_example_csv=input_csv,
+            output_dir=input_csv.parent,
+            encoding=encoding,
+        )
+    )
+    return Task1DataBundle(
+        chinese_header=chinese_header,
+        english_header=english_header,
+        rows=rows,
+    )
 
 
 def _read_submit_example(path: Path) -> list[datetime]:

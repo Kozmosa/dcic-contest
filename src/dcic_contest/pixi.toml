@@ -6,6 +6,8 @@ platforms = ["osx-arm64"]
 version = "0.1.0"
 
 [tasks]
+data-audit = "PYTHONPATH=../.. python ../../scripts/run_data_audit.py"
+backtest-baselines = "PYTHONPATH=../.. python ../../scripts/run_backtest.py"
 
 [dependencies]
 python = "3.11.*"

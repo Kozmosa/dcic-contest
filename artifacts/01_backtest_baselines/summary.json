@@ -1,0 +1,21 @@
+{
+  "source_file": "/Users/kozmosa/code/dcic-contest/data/A榜-充电站充电负荷训练数据.csv",
+  "n_folds": 3,
+  "horizon_steps": 96,
+  "horizon_hours": 24.0,
+  "models": {
+    "last_day_same_slot": {
+      "rmse_mean": 0.207497,
+      "rmse_std": 0.006187
+    },
+    "last_7day_same_slot": {
+      "rmse_mean": 0.766311,
+      "rmse_std": 0.001244
+    },
+    "weekday_slot_mean": {
+      "rmse_mean": 0.255276,
+      "rmse_std": 0.0073
+    }
+  },
+  "best_model_by_mean_rmse": "last_day_same_slot"
+}
