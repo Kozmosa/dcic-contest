@@ -4,7 +4,7 @@
 
 - Python version: `3.11`
 - Package and environment management: `pixi` + `uv`
-- Virtual environment path: `dcic-contest/.venv`
+- Virtual environment path: `src/dcic-contest/.venv`
 
 ## Code Quality
 

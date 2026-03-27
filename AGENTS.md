@@ -16,9 +16,9 @@ Unless a task explicitly says otherwise, agents should treat Task 1 as the defau
 
 When requirements conflict or are incomplete, use the following priority order:
 
-1. `docs/数据中国-新能源汽车挑战赛.md`
+1. `docs/CommunicationBasis.md`
 2. `docs/ProjectBasis.md`
-3. `docs/CommunicationBasis.md`
+3. `docs/数据中国-新能源汽车挑战赛.md`
 4. Actual file formats and examples under `data/`
 5. Existing project code and configs
 6. Temporary notes or ad hoc assumptions
