@@ -42,6 +42,17 @@ class TimeFeatureTest(unittest.TestCase):
         self.assertEqual(features["month"], 1)
         self.assertEqual(features["day"], 6)
         self.assertEqual(features["is_weekend"], 1)
+        self.assertEqual(features["is_holiday"], 0)
+        self.assertEqual(features["is_makeup_workday"], 0)
+
+    def test_build_time_features_for_holiday_and_makeup_workday(self) -> None:
+        holiday_features = build_time_features(datetime(2024, 10, 1, 10, 0))
+        makeup_features = build_time_features(datetime(2024, 10, 12, 10, 0))
+
+        self.assertEqual(holiday_features["is_holiday"], 1)
+        self.assertEqual(holiday_features["is_workday"], 0)
+        self.assertEqual(makeup_features["is_makeup_workday"], 1)
+        self.assertEqual(makeup_features["is_workday"], 1)
 
 
 class FeatureRowBuilderTest(unittest.TestCase):
@@ -72,6 +83,8 @@ class FeatureRowBuilderTest(unittest.TestCase):
             lag_steps=(1, 3),
             rolling_windows=(2, 4),
             rolling_stats=("mean",),
+            same_weekday_slot_windows=(),
+            same_slot_day_windows=(),
             drop_incomplete_rows=True,
         )
 
@@ -94,25 +107,34 @@ class FeatureRowBuilderTest(unittest.TestCase):
             build_feature_rows(rows, spec)
 
     def test_build_prediction_features_uses_history_only(self) -> None:
-        rows = make_rows(datetime(2024, 1, 1, 0, 0), [1.0, 2.0, 3.0, 4.0, 5.0])
+        rows = make_rows(
+            datetime(2024, 1, 1, 0, 0),
+            [float(day) for day in range(1, 29)],
+            step_minutes=24 * 60,
+        )
         spec = FeatureSpec(
             lag_steps=(1, 3),
             rolling_windows=(2, 4),
             rolling_stats=("mean", "max"),
+            same_weekday_slot_windows=(2,),
+            same_slot_day_windows=(7, 14),
         )
 
         feature_row = build_prediction_features(
             rows,
-            datetime(2024, 1, 1, 1, 15),
+            datetime(2024, 1, 29, 0, 0),
             spec,
         )
 
-        self.assertEqual(feature_row["lag_1"], 5.0)
-        self.assertEqual(feature_row["lag_3"], 3.0)
-        self.assertEqual(feature_row["rolling_2_mean"], 4.5)
-        self.assertEqual(feature_row["rolling_2_max"], 5.0)
-        self.assertEqual(feature_row["rolling_4_mean"], 3.5)
-        self.assertEqual(feature_row["rolling_4_max"], 5.0)
+        self.assertEqual(feature_row["lag_1"], 28.0)
+        self.assertEqual(feature_row["lag_3"], 26.0)
+        self.assertEqual(feature_row["rolling_2_mean"], 27.5)
+        self.assertEqual(feature_row["rolling_2_max"], 28.0)
+        self.assertEqual(feature_row["rolling_4_mean"], 26.5)
+        self.assertEqual(feature_row["rolling_4_max"], 28.0)
+        self.assertEqual(feature_row["same_weekday_slot_mean_2"], 18.5)
+        self.assertEqual(feature_row["same_slot_mean_7d"], 25.0)
+        self.assertEqual(feature_row["same_slot_mean_14d"], 21.5)
 
 
 if __name__ == "__main__":

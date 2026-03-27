@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from sklearn.multioutput import MultiOutputRegressor
+
 from dcic_contest.baseline.base import ForecastContext
 from dcic_contest.baseline.features import (
     FeatureSpec,
@@ -19,9 +21,9 @@ class LightGBMConfig:
     feature_spec: FeatureSpec = field(default_factory=FeatureSpec)
     params: dict[str, Any] = field(
         default_factory=lambda: {
-            "n_estimators": 300,
-            "learning_rate": 0.05,
-            "num_leaves": 31,
+            "n_estimators": 500,
+            "learning_rate": 0.03,
+            "num_leaves": 63,
             "subsample": 0.9,
             "colsample_bytree": 0.9,
             "random_state": 42,
@@ -30,9 +32,7 @@ class LightGBMConfig:
     )
 
 
-class LightGBMRecursiveForecaster:
-    name = "lightgbm_recursive"
-
+class _LightGBMBaseForecaster:
     def __init__(self, config: LightGBMConfig | None = None) -> None:
         self.config = LightGBMConfig() if config is None else config
 
@@ -41,7 +41,7 @@ class LightGBMRecursiveForecaster:
             from lightgbm import LGBMRegressor
         except ModuleNotFoundError as exc:
             raise ModuleNotFoundError(
-                "lightgbm is required for lightgbm_recursive. "
+                "lightgbm is required for LightGBM baselines. "
                 "Add it to the environment before running this baseline."
             ) from exc
         return LGBMRegressor(**self.config.params)
@@ -55,7 +55,7 @@ class LightGBMRecursiveForecaster:
             import pandas as pd
         except ModuleNotFoundError as exc:
             raise ModuleNotFoundError(
-                "pandas is required for lightgbm_recursive feature matrix construction. "
+                "pandas is required for LightGBM feature matrix construction. "
                 "Add it to the environment before running this baseline."
             ) from exc
         return pd.DataFrame(rows, columns=columns).astype(float)
@@ -71,6 +71,10 @@ class LightGBMRecursiveForecaster:
         if x_train.empty:
             raise ValueError("No training rows available after feature generation")
         return x_train, y_train, columns
+
+
+class LightGBMRecursiveForecaster(_LightGBMBaseForecaster):
+    name = "lightgbm_recursive"
 
     def predict(self, context: ForecastContext) -> list[float]:
         x_train, y_train, columns = self._prepare_training_matrix(context.train_rows)
@@ -98,3 +102,49 @@ class LightGBMRecursiveForecaster:
             )
 
         return predictions
+
+
+class LightGBMDirectForecaster(_LightGBMBaseForecaster):
+    name = "lightgbm_direct"
+
+    def _prepare_direct_training_matrix(
+        self, train_rows: list[dict[str, Any]], horizon_steps: int
+    ) -> tuple[Any, list[list[float]], list[str]]:
+        feature_rows = build_feature_rows(train_rows, self.config.feature_spec)
+        columns = feature_column_names(self.config.feature_spec)
+        target_column = self.config.feature_spec.target_column
+        usable_rows = (
+            feature_rows[:-horizon_steps] if horizon_steps > 0 else feature_rows
+        )
+        if not usable_rows:
+            raise ValueError("No training rows available for direct multi-step targets")
+
+        x_train = self._build_dataframe(usable_rows, columns)
+        y_train: list[list[float]] = []
+        for index in range(len(usable_rows)):
+            target_vector = [
+                float(feature_rows[index + step][target_column])
+                for step in range(horizon_steps)
+            ]
+            y_train.append(target_vector)
+        return x_train, y_train, columns
+
+    def predict(self, context: ForecastContext) -> list[float]:
+        horizon = len(context.future_rows)
+        x_train, y_train, columns = self._prepare_direct_training_matrix(
+            context.train_rows, horizon
+        )
+        future_feature = build_prediction_features(
+            context.train_rows,
+            context.future_rows[0]["TIME"],
+            self.config.feature_spec,
+        )
+        x_future = self._build_dataframe(
+            [{column: float(future_feature[column]) for column in columns}],
+            columns,
+        )
+        model = self._build_regressor()
+        multi_output_model = MultiOutputRegressor(model)
+        multi_output_model.fit(x_train, y_train)
+        predictions = multi_output_model.predict(x_future)[0]
+        return [float(value) for value in predictions]

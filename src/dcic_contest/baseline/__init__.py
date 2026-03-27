@@ -6,7 +6,11 @@ from dcic_contest.baseline.features import (
     build_time_features,
     feature_column_names,
 )
-from dcic_contest.baseline.gbdt import LightGBMConfig, LightGBMRecursiveForecaster
+from dcic_contest.baseline.gbdt import (
+    LightGBMConfig,
+    LightGBMDirectForecaster,
+    LightGBMRecursiveForecaster,
+)
 from dcic_contest.baseline.registry import (
     DEFAULT_BASELINE_NAMES,
     available_baselines,
@@ -18,6 +22,7 @@ __all__ = [
     "ForecastContext",
     "FeatureSpec",
     "LightGBMConfig",
+    "LightGBMDirectForecaster",
     "LightGBMRecursiveForecaster",
     "DEFAULT_BASELINE_NAMES",
     "available_baselines",

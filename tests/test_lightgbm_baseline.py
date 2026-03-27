@@ -7,6 +7,7 @@ import sys
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 
@@ -18,7 +19,11 @@ if str(SRC) not in sys.path:
 
 from dcic_contest.baseline.base import ForecastContext
 from dcic_contest.baseline.features import FeatureSpec
-from dcic_contest.baseline.gbdt import LightGBMConfig, LightGBMRecursiveForecaster
+from dcic_contest.baseline.gbdt import (
+    LightGBMConfig,
+    LightGBMDirectForecaster,
+    LightGBMRecursiveForecaster,
+)
 from dcic_contest.baseline.registry import build_forecasters
 
 
@@ -33,16 +38,19 @@ def make_rows(
 
 class FakeRegressor:
     def __init__(self) -> None:
-        self.fit_x: list[list[float]] | None = None
+        self.fit_x: Any = None
         self.fit_y: list[float] | None = None
         self.last_seen_values: list[float] = []
 
-    def fit(self, x_train: list[list[float]], y_train: list[float]) -> None:
+    def fit(self, x_train: Any, y_train: list[float]) -> None:
         self.fit_x = x_train
         self.fit_y = y_train
 
-    def predict(self, x_future: list[list[float]]) -> list[float]:
-        self.last_seen_values.append(x_future[0][0])
+    def predict(self, x_future: Any) -> list[float]:
+        self.last_seen_values.append(float(x_future.iloc[0, 0]))
+        if self.fit_y and isinstance(self.fit_y[0], list):
+            horizon = len(self.fit_y[0])
+            return [[100.0 + offset for offset in range(1, horizon + 1)]]
         return [100.0 + len(self.last_seen_values)]
 
 
@@ -102,10 +110,52 @@ class LightGBMRecursiveForecasterTest(unittest.TestCase):
         self.assertEqual(fake_regressor.last_seen_values[1], 1.0)
 
     def test_registry_builds_lightgbm_forecaster(self) -> None:
-        forecasters = build_forecasters(["lightgbm_recursive"])
+        forecasters = build_forecasters(["lightgbm_recursive", "lightgbm_direct"])
 
-        self.assertEqual(len(forecasters), 1)
+        self.assertEqual(len(forecasters), 2)
         self.assertEqual(forecasters[0].name, "lightgbm_recursive")
+        self.assertEqual(forecasters[1].name, "lightgbm_direct")
+
+
+@unittest.skipUnless(
+    importlib.util.find_spec("pandas") is not None,
+    "pandas is required for LightGBM baseline tests",
+)
+class LightGBMDirectForecasterTest(unittest.TestCase):
+    def test_predict_returns_horizon_length_predictions(self) -> None:
+        train_rows = make_rows(
+            datetime(2024, 1, 1, 0, 0),
+            [float(idx) for idx in range(1, 40)],
+            step_minutes=24 * 60,
+        )
+        future_rows = make_rows(
+            datetime(2024, 2, 9, 0, 0),
+            [0.0, 0.0],
+            step_minutes=24 * 60,
+        )
+        forecaster = LightGBMDirectForecaster(
+            LightGBMConfig(
+                feature_spec=FeatureSpec(
+                    lag_steps=(1, 7),
+                    rolling_windows=(2, 4),
+                    rolling_stats=("mean",),
+                    same_weekday_slot_windows=(2,),
+                    same_slot_day_windows=(7, 14),
+                )
+            )
+        )
+        fake_regressor = FakeRegressor()
+
+        with patch.object(forecaster, "_build_regressor", return_value=fake_regressor):
+            predictions = forecaster.predict(
+                ForecastContext(
+                    train_rows=train_rows,
+                    future_rows=future_rows,
+                    horizon_steps=2,
+                )
+            )
+
+        self.assertEqual(predictions, [101.0, 102.0])
 
 
 if __name__ == "__main__":

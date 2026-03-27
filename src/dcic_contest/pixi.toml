@@ -9,6 +9,7 @@ version = "0.1.0"
 data-audit = "PYTHONPATH=../.. python ../../scripts/run_data_audit.py"
 backtest-baselines = "PYTHONPATH=../.. python ../../scripts/run_backtest.py"
 backtest-lightgbm = "PYTHONPATH=../.. python ../../scripts/run_backtest.py --models lightgbm_recursive"
+backtest-lightgbm-compare = "PYTHONPATH=../.. python ../../scripts/run_backtest.py --models lightgbm_recursive,lightgbm_direct"
 run-baseline-experiment = "PYTHONPATH=../.. python ../../scripts/run_baseline_experiment.py"
 
 [dependencies]
