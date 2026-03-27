@@ -91,3 +91,51 @@ def build_feature_rows(
         output_rows.append(feature_row)
 
     return output_rows
+
+
+def feature_column_names(spec: FeatureSpec | None = None) -> list[str]:
+    feature_spec = FeatureSpec() if spec is None else spec
+    columns = [
+        "hour",
+        "minute",
+        "quarter_slot",
+        "weekday",
+        "month",
+        "day",
+        "dayofyear",
+        "weekofyear",
+        "is_weekend",
+    ]
+    columns.extend(f"lag_{lag_step}" for lag_step in feature_spec.lag_steps)
+    for window in feature_spec.rolling_windows:
+        for stat_name in feature_spec.rolling_stats:
+            columns.append(f"rolling_{window}_{stat_name}")
+    return columns
+
+
+def build_prediction_features(
+    history_rows: list[dict[str, Any]],
+    prediction_time: datetime,
+    spec: FeatureSpec | None = None,
+) -> dict[str, Any]:
+    feature_spec = FeatureSpec() if spec is None else spec
+    target_column = feature_spec.target_column
+    values = [float(row[target_column]) for row in history_rows]
+    feature_row: dict[str, Any] = {"TIME": prediction_time}
+    feature_row.update(build_time_features(prediction_time))
+
+    for lag_step in feature_spec.lag_steps:
+        if len(values) < lag_step:
+            raise ValueError(f"Not enough history for lag feature lag_{lag_step}")
+        feature_row[f"lag_{lag_step}"] = values[-lag_step]
+
+    for window in feature_spec.rolling_windows:
+        if len(values) < window:
+            raise ValueError(f"Not enough history for rolling feature window {window}")
+        history = values[-window:]
+        for stat_name in feature_spec.rolling_stats:
+            feature_row[f"rolling_{window}_{stat_name}"] = _rolling_stat(
+                history, stat_name
+            )
+
+    return feature_row

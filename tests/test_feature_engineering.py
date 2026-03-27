@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# pyright: reportMissingImports=false
+
 import sys
 import unittest
 from datetime import datetime, timedelta
@@ -15,6 +17,7 @@ if str(SRC) not in sys.path:
 from dcic_contest.baseline.features import (
     FeatureSpec,
     build_feature_rows,
+    build_prediction_features,
     build_time_features,
 )
 
@@ -89,6 +92,27 @@ class FeatureRowBuilderTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "Unsupported rolling stat"):
             build_feature_rows(rows, spec)
+
+    def test_build_prediction_features_uses_history_only(self) -> None:
+        rows = make_rows(datetime(2024, 1, 1, 0, 0), [1.0, 2.0, 3.0, 4.0, 5.0])
+        spec = FeatureSpec(
+            lag_steps=(1, 3),
+            rolling_windows=(2, 4),
+            rolling_stats=("mean", "max"),
+        )
+
+        feature_row = build_prediction_features(
+            rows,
+            datetime(2024, 1, 1, 1, 15),
+            spec,
+        )
+
+        self.assertEqual(feature_row["lag_1"], 5.0)
+        self.assertEqual(feature_row["lag_3"], 3.0)
+        self.assertEqual(feature_row["rolling_2_mean"], 4.5)
+        self.assertEqual(feature_row["rolling_2_max"], 5.0)
+        self.assertEqual(feature_row["rolling_4_mean"], 3.5)
+        self.assertEqual(feature_row["rolling_4_max"], 5.0)
 
 
 if __name__ == "__main__":

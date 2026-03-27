@@ -8,6 +8,7 @@ version = "0.1.0"
 [tasks]
 data-audit = "PYTHONPATH=../.. python ../../scripts/run_data_audit.py"
 backtest-baselines = "PYTHONPATH=../.. python ../../scripts/run_backtest.py"
+backtest-lightgbm = "PYTHONPATH=../.. python ../../scripts/run_backtest.py --models lightgbm_recursive"
 
 [dependencies]
 python = "3.11.*"
@@ -16,3 +17,4 @@ numpy = ">=2.4.3,<3"
 scikit-learn = ">=1.8.0,<2"
 matplotlib = ">=3.10.8,<4"
 seaborn = ">=0.13.2,<0.14"
+lightgbm = ">=4.6.0,<5"

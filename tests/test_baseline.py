@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# pyright: reportMissingImports=false
+
 import sys
 import unittest
 from datetime import datetime, timedelta
@@ -143,7 +145,10 @@ class RegistryTest(unittest.TestCase):
         )
 
     def test_available_baselines_is_sorted(self) -> None:
-        self.assertEqual(available_baselines(), sorted(DEFAULT_BASELINE_NAMES))
+        baselines = available_baselines()
+
+        self.assertEqual(baselines, sorted(baselines))
+        self.assertTrue(set(DEFAULT_BASELINE_NAMES).issubset(set(baselines)))
 
     def test_build_forecasters_rejects_unknown_name(self) -> None:
         with self.assertRaisesRegex(ValueError, "Unknown baseline names"):

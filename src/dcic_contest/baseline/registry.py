@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dcic_contest.baseline.base import BaselineForecaster
+from dcic_contest.baseline.gbdt import LightGBMRecursiveForecaster
 from dcic_contest.baseline.naive import (
     Last7DaySameSlotForecaster,
     LastDaySameSlotForecaster,
@@ -18,6 +19,7 @@ _FORECASTERS: dict[str, type[BaselineForecaster]] = {
     LastDaySameSlotForecaster.name: LastDaySameSlotForecaster,
     Last7DaySameSlotForecaster.name: Last7DaySameSlotForecaster,
     WeekdaySlotMeanForecaster.name: WeekdaySlotMeanForecaster,
+    LightGBMRecursiveForecaster.name: LightGBMRecursiveForecaster,
 }
 
 
