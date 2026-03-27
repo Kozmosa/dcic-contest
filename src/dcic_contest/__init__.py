@@ -1,0 +1,1 @@
+"""dcic_contest package."""

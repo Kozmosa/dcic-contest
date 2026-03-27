@@ -1,0 +1,6 @@
+input_csv = "data/A榜-充电站充电负荷训练数据.csv"
+submit_example_csv = "data/submit_example.csv"
+output_dir = "artifacts/00_data_audit"
+encoding = "gb18030"
+target_column = "V"
+expected_interval_minutes = 15
