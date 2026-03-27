@@ -1,0 +1,9 @@
+{
+  "input_csv": "/Users/kozmosa/code/dcic-contest/data/A榜-充电站充电负荷训练数据.csv",
+  "submit_example_csv": "/Users/kozmosa/code/dcic-contest/data/submit_example.csv",
+  "baseline_name": "lightgbm_recursive",
+  "encoding": "gb18030",
+  "horizon_steps": 96,
+  "n_folds": 3,
+  "experiment_dir": "../../experiments/0327_194129_6d3187_LightGBMRecursiveBaseline"
+}

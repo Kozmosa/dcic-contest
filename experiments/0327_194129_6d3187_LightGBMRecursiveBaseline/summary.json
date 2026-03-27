@@ -1,0 +1,35 @@
+{
+  "config": {
+    "input_csv": "/Users/kozmosa/code/dcic-contest/data/A榜-充电站充电负荷训练数据.csv",
+    "submit_example_csv": "/Users/kozmosa/code/dcic-contest/data/submit_example.csv",
+    "baseline_name": "lightgbm_recursive",
+    "encoding": "gb18030",
+    "horizon_steps": 96,
+    "n_folds": 3,
+    "experiment_dir": "../../experiments/0327_194129_6d3187_LightGBMRecursiveBaseline"
+  },
+  "backtest": {
+    "source_file": "/Users/kozmosa/code/dcic-contest/data/A榜-充电站充电负荷训练数据.csv",
+    "n_folds": 3,
+    "horizon_steps": 96,
+    "horizon_hours": 24.0,
+    "baseline_names": [
+      "lightgbm_recursive"
+    ],
+    "models": {
+      "lightgbm_recursive": {
+        "rmse_mean": 0.164549,
+        "rmse_std": 0.00623
+      }
+    },
+    "best_model_by_mean_rmse": "lightgbm_recursive"
+  },
+  "prediction": {
+    "baseline_name": "lightgbm_recursive",
+    "prediction_count": 5856,
+    "prediction_min": 1.623447,
+    "prediction_max": 8.591808,
+    "prediction_mean": 5.127081,
+    "submission_path": "../../experiments/0327_194129_6d3187_LightGBMRecursiveBaseline/results/lightgbm_recursive_submission.csv"
+  }
+}

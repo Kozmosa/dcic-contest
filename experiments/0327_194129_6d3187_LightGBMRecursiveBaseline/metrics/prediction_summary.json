@@ -1,0 +1,8 @@
+{
+  "baseline_name": "lightgbm_recursive",
+  "prediction_count": 5856,
+  "prediction_min": 1.623447,
+  "prediction_max": 8.591808,
+  "prediction_mean": 5.127081,
+  "submission_path": "../../experiments/0327_194129_6d3187_LightGBMRecursiveBaseline/results/lightgbm_recursive_submission.csv"
+}

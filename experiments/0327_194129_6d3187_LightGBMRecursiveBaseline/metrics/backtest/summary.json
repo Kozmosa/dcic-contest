@@ -1,0 +1,16 @@
+{
+  "source_file": "/Users/kozmosa/code/dcic-contest/data/A榜-充电站充电负荷训练数据.csv",
+  "n_folds": 3,
+  "horizon_steps": 96,
+  "horizon_hours": 24.0,
+  "baseline_names": [
+    "lightgbm_recursive"
+  ],
+  "models": {
+    "lightgbm_recursive": {
+      "rmse_mean": 0.164549,
+      "rmse_std": 0.00623
+    }
+  },
+  "best_model_by_mean_rmse": "lightgbm_recursive"
+}
