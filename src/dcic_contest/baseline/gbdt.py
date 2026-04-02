@@ -23,10 +23,15 @@ class LightGBMConfig:
         default_factory=lambda: {
             "n_estimators": 500,
             "learning_rate": 0.03,
-            "num_leaves": 63,
-            "subsample": 0.9,
-            "colsample_bytree": 0.9,
+            "num_leaves": 31,
+            "min_child_samples": 48,
+            "subsample": 0.85,
+            "subsample_freq": 1,
+            "colsample_bytree": 0.8,
+            "reg_alpha": 0.1,
+            "reg_lambda": 1.0,
             "random_state": 42,
+            "n_jobs": 1,
             "verbosity": -1,
         }
     )
@@ -148,3 +153,92 @@ class LightGBMDirectForecaster(_LightGBMBaseForecaster):
         multi_output_model.fit(x_train, y_train)
         predictions = multi_output_model.predict(x_future)[0]
         return [float(value) for value in predictions]
+
+
+@dataclass(frozen=True)
+class LightGBMRecursiveClippedConfig:
+    base: LightGBMConfig = field(default_factory=LightGBMConfig)
+    clip_history_days: int = 14
+    clip_quantile_low: float = 0.0
+    clip_quantile_high: float = 1.0
+
+
+class LightGBMRecursiveClippedForecaster(LightGBMRecursiveForecaster):
+    name = "lightgbm_recursive_clipped"
+
+    def __init__(
+        self, config: LightGBMRecursiveClippedConfig | None = None
+    ) -> None:
+        self.clip_config = (
+            LightGBMRecursiveClippedConfig() if config is None else config
+        )
+        super().__init__(self.clip_config.base)
+
+    def _clip_prediction(self, history_rows: list[dict[str, Any]], value: float) -> float:
+        history_values = [float(row["V"]) for row in history_rows]
+        clip_window = 96 * self.clip_config.clip_history_days
+        recent_values = (
+            history_values[-clip_window:] if len(history_values) >= clip_window else history_values
+        )
+        if not recent_values:
+            return value
+        sorted_values = sorted(recent_values)
+        lower_index = int((len(sorted_values) - 1) * self.clip_config.clip_quantile_low)
+        upper_index = int((len(sorted_values) - 1) * self.clip_config.clip_quantile_high)
+        lower_bound = sorted_values[lower_index]
+        upper_bound = sorted_values[upper_index]
+        return min(max(value, lower_bound), upper_bound)
+
+    def predict(self, context: ForecastContext) -> list[float]:
+        x_train, y_train, columns = self._prepare_training_matrix(context.train_rows)
+        model = self._build_regressor()
+        model.fit(x_train, y_train)
+
+        history_rows = [dict(row) for row in context.train_rows]
+        predictions: list[float] = []
+        target_column = self.config.feature_spec.target_column
+
+        for future_row in context.future_rows:
+            feature_row = build_prediction_features(
+                history_rows,
+                future_row["TIME"],
+                self.config.feature_spec,
+            )
+            x_future = self._build_dataframe(
+                [{column: float(feature_row[column]) for column in columns}],
+                columns,
+            )
+            predicted_value = float(model.predict(x_future)[0])
+            predicted_value = self._clip_prediction(history_rows, predicted_value)
+            predictions.append(predicted_value)
+            history_rows.append(
+                {"TIME": future_row["TIME"], target_column: predicted_value}
+            )
+
+        return predictions
+
+
+class LightGBMRecursiveClippedP95Forecaster(LightGBMRecursiveClippedForecaster):
+    name = "lightgbm_recursive_clipped_p95"
+
+    def __init__(self) -> None:
+        super().__init__(
+            LightGBMRecursiveClippedConfig(
+                clip_history_days=14,
+                clip_quantile_low=0.01,
+                clip_quantile_high=0.99,
+            )
+        )
+
+
+class LightGBMRecursiveClippedHardForecaster(LightGBMRecursiveClippedForecaster):
+    name = "lightgbm_recursive_clipped_hard"
+
+    def __init__(self) -> None:
+        super().__init__(
+            LightGBMRecursiveClippedConfig(
+                clip_history_days=14,
+                clip_quantile_low=0.0,
+                clip_quantile_high=1.0,
+            )
+        )

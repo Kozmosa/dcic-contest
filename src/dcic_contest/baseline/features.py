@@ -2,64 +2,18 @@ from __future__ import annotations
 
 import statistics
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 
 @dataclass(frozen=True)
 class FeatureSpec:
     target_column: str = "V"
-    lag_steps: tuple[int, ...] = (1, 4, 96, 192, 288, 672)
-    rolling_windows: tuple[int, ...] = (4, 8, 16, 32, 96)
-    rolling_stats: tuple[str, ...] = ("mean", "min", "max")
-    same_weekday_slot_windows: tuple[int, ...] = (4, 8, 16)
-    same_slot_day_windows: tuple[int, ...] = (7, 14, 28)
+    lag_steps: tuple[int, ...] = (1, 4, 96, 192, 288, 672, 1344, 2688)
+    rolling_windows: tuple[int, ...] = (4, 8, 16, 32, 96, 192)
+    rolling_stats: tuple[str, ...] = ("mean", "min", "max", "std")
+    same_slot_windows_days: tuple[int, ...] = (3, 7, 14, 28)
     drop_incomplete_rows: bool = True
-
-
-HOLIDAY_DATES = {
-    date(2024, 1, 1),
-    date(2024, 2, 10),
-    date(2024, 2, 11),
-    date(2024, 2, 12),
-    date(2024, 2, 13),
-    date(2024, 2, 14),
-    date(2024, 2, 15),
-    date(2024, 2, 16),
-    date(2024, 2, 17),
-    date(2024, 4, 4),
-    date(2024, 4, 5),
-    date(2024, 4, 6),
-    date(2024, 5, 1),
-    date(2024, 5, 2),
-    date(2024, 5, 3),
-    date(2024, 5, 4),
-    date(2024, 5, 5),
-    date(2024, 6, 8),
-    date(2024, 6, 9),
-    date(2024, 6, 10),
-    date(2024, 9, 15),
-    date(2024, 9, 16),
-    date(2024, 9, 17),
-    date(2024, 10, 1),
-    date(2024, 10, 2),
-    date(2024, 10, 3),
-    date(2024, 10, 4),
-    date(2024, 10, 5),
-    date(2024, 10, 6),
-    date(2024, 10, 7),
-}
-
-MAKEUP_WORKDAY_DATES = {
-    date(2024, 2, 4),
-    date(2024, 2, 18),
-    date(2024, 4, 7),
-    date(2024, 4, 28),
-    date(2024, 5, 11),
-    date(2024, 9, 14),
-    date(2024, 9, 29),
-    date(2024, 10, 12),
-}
 
 
 def quarter_slot(value: datetime) -> int:
@@ -71,9 +25,6 @@ def weekday_slot_key(value: datetime) -> tuple[int, int]:
 
 
 def build_time_features(value: datetime) -> dict[str, int]:
-    day = value.date()
-    is_holiday = int(day in HOLIDAY_DATES)
-    is_makeup_workday = int(day in MAKEUP_WORKDAY_DATES)
     return {
         "hour": value.hour,
         "minute": value.minute,
@@ -84,13 +35,6 @@ def build_time_features(value: datetime) -> dict[str, int]:
         "dayofyear": value.timetuple().tm_yday,
         "weekofyear": value.isocalendar().week,
         "is_weekend": int(value.weekday() >= 5),
-        "is_holiday": is_holiday,
-        "is_makeup_workday": is_makeup_workday,
-        "is_workday": int(
-            not is_holiday and (value.weekday() < 5 or is_makeup_workday)
-        ),
-        "is_pre_holiday": int(day + timedelta(days=1) in HOLIDAY_DATES),
-        "is_post_holiday": int(day - timedelta(days=1) in HOLIDAY_DATES),
     }
 
 
@@ -101,7 +45,21 @@ def _rolling_stat(values: list[float], stat_name: str) -> float:
         return min(values)
     if stat_name == "max":
         return max(values)
+    if stat_name == "std":
+        return statistics.pstdev(values) if len(values) > 1 else 0.0
     raise ValueError(f"Unsupported rolling stat: {stat_name}")
+
+
+def _same_slot_history(
+    values: list[float],
+    index: int,
+    horizon_steps: int,
+    days: int,
+) -> list[float] | None:
+    offsets = [horizon_steps * day for day in range(1, days + 1)]
+    if any(index < offset for offset in offsets):
+        return None
+    return [values[index - offset] for offset in offsets]
 
 
 def build_feature_rows(
@@ -112,13 +70,9 @@ def build_feature_rows(
     target_column = feature_spec.target_column
     values = [float(row[target_column]) for row in rows]
     output_rows: list[dict[str, Any]] = []
-    same_weekday_slot_history: dict[tuple[int, int], list[float]] = {}
-    same_slot_day_history: dict[int, list[float]] = {}
 
     for index, row in enumerate(rows):
         row_time = row["TIME"]
-        slot_key = quarter_slot(row_time)
-        weekday_slot = weekday_slot_key(row_time)
         feature_row: dict[str, Any] = {
             "TIME": row_time,
             target_column: float(row[target_column]),
@@ -147,39 +101,31 @@ def build_feature_rows(
                     feature_row[f"rolling_{window}_{stat_name}"] = None
                 is_complete = False
 
-        weekday_slot_values = same_weekday_slot_history.get(weekday_slot, [])
-        for window in feature_spec.same_weekday_slot_windows:
-            feature_name = f"same_weekday_slot_mean_{window}"
-            if len(weekday_slot_values) >= window:
-                feature_row[feature_name] = statistics.fmean(
-                    weekday_slot_values[-window:]
+        for days in feature_spec.same_slot_windows_days:
+            same_slot_values = _same_slot_history(values, index, 96, days)
+            if same_slot_values is None:
+                feature_row[f"same_slot_{days}d_mean"] = None
+                feature_row[f"same_slot_{days}d_std"] = None
+                feature_row[f"same_slot_{days}d_min"] = None
+                feature_row[f"same_slot_{days}d_max"] = None
+                is_complete = False
+            else:
+                feature_row[f"same_slot_{days}d_mean"] = _rolling_stat(
+                    same_slot_values, "mean"
                 )
-            else:
-                feature_row[feature_name] = None
-                is_complete = False
-
-        same_slot_values = same_slot_day_history.get(slot_key, [])
-        for window in feature_spec.same_slot_day_windows:
-            feature_name = f"same_slot_mean_{window}d"
-            if len(same_slot_values) >= window:
-                feature_row[feature_name] = statistics.fmean(same_slot_values[-window:])
-            else:
-                feature_row[feature_name] = None
-                is_complete = False
+                feature_row[f"same_slot_{days}d_std"] = _rolling_stat(
+                    same_slot_values, "std"
+                )
+                feature_row[f"same_slot_{days}d_min"] = _rolling_stat(
+                    same_slot_values, "min"
+                )
+                feature_row[f"same_slot_{days}d_max"] = _rolling_stat(
+                    same_slot_values, "max"
+                )
 
         if feature_spec.drop_incomplete_rows and not is_complete:
-            same_weekday_slot_history.setdefault(weekday_slot, []).append(
-                float(row[target_column])
-            )
-            same_slot_day_history.setdefault(slot_key, []).append(
-                float(row[target_column])
-            )
             continue
         output_rows.append(feature_row)
-        same_weekday_slot_history.setdefault(weekday_slot, []).append(
-            float(row[target_column])
-        )
-        same_slot_day_history.setdefault(slot_key, []).append(float(row[target_column]))
 
     return output_rows
 
@@ -196,20 +142,20 @@ def feature_column_names(spec: FeatureSpec | None = None) -> list[str]:
         "dayofyear",
         "weekofyear",
         "is_weekend",
-        "is_holiday",
-        "is_makeup_workday",
-        "is_workday",
-        "is_pre_holiday",
-        "is_post_holiday",
     ]
     columns.extend(f"lag_{lag_step}" for lag_step in feature_spec.lag_steps)
     for window in feature_spec.rolling_windows:
         for stat_name in feature_spec.rolling_stats:
             columns.append(f"rolling_{window}_{stat_name}")
-    for window in feature_spec.same_weekday_slot_windows:
-        columns.append(f"same_weekday_slot_mean_{window}")
-    for window in feature_spec.same_slot_day_windows:
-        columns.append(f"same_slot_mean_{window}d")
+    for days in feature_spec.same_slot_windows_days:
+        columns.extend(
+            [
+                f"same_slot_{days}d_mean",
+                f"same_slot_{days}d_std",
+                f"same_slot_{days}d_min",
+                f"same_slot_{days}d_max",
+            ]
+        )
     return columns
 
 
@@ -223,19 +169,6 @@ def build_prediction_features(
     values = [float(row[target_column]) for row in history_rows]
     feature_row: dict[str, Any] = {"TIME": prediction_time}
     feature_row.update(build_time_features(prediction_time))
-    history_before_prediction = [
-        row for row in history_rows if row["TIME"] < prediction_time
-    ]
-    weekday_slot_values = [
-        float(row[target_column])
-        for row in history_before_prediction
-        if weekday_slot_key(row["TIME"]) == weekday_slot_key(prediction_time)
-    ]
-    same_slot_values = [
-        float(row[target_column])
-        for row in history_before_prediction
-        if quarter_slot(row["TIME"]) == quarter_slot(prediction_time)
-    ]
 
     for lag_step in feature_spec.lag_steps:
         if len(values) < lag_step:
@@ -251,20 +184,23 @@ def build_prediction_features(
                 history, stat_name
             )
 
-    for window in feature_spec.same_weekday_slot_windows:
-        feature_name = f"same_weekday_slot_mean_{window}"
-        if len(weekday_slot_values) < window:
+    for days in feature_spec.same_slot_windows_days:
+        same_slot_values = _same_slot_history(values, len(values), 96, days)
+        if same_slot_values is None:
             raise ValueError(
-                f"Not enough history for same weekday slot feature window {window}"
+                f"Not enough history for same-slot feature window {days} days"
             )
-        feature_row[feature_name] = statistics.fmean(weekday_slot_values[-window:])
-
-    for window in feature_spec.same_slot_day_windows:
-        feature_name = f"same_slot_mean_{window}d"
-        if len(same_slot_values) < window:
-            raise ValueError(
-                f"Not enough history for same slot feature window {window}"
-            )
-        feature_row[feature_name] = statistics.fmean(same_slot_values[-window:])
+        feature_row[f"same_slot_{days}d_mean"] = _rolling_stat(
+            same_slot_values, "mean"
+        )
+        feature_row[f"same_slot_{days}d_std"] = _rolling_stat(
+            same_slot_values, "std"
+        )
+        feature_row[f"same_slot_{days}d_min"] = _rolling_stat(
+            same_slot_values, "min"
+        )
+        feature_row[f"same_slot_{days}d_max"] = _rolling_stat(
+            same_slot_values, "max"
+        )
 
     return feature_row

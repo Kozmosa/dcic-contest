@@ -37,9 +37,21 @@ def main() -> int:
         type=Path,
         default=ROOT / "artifacts" / "01_backtest_baselines",
     )
+    parser.add_argument(
+        "--submit-example-csv",
+        type=Path,
+        default=ROOT / "data" / "submit_example.csv",
+        help="If provided, also compute full-span RMSE over the entire submit window.",
+    )
     parser.add_argument("--encoding", default="gb18030")
     parser.add_argument("--horizon-steps", type=int, default=96)
     parser.add_argument("--n-folds", type=int, default=3)
+    parser.add_argument(
+        "--fold-stride-steps",
+        type=int,
+        default=96,
+        help="Spacing between backtest windows in 15-minute steps. Use 96 for daily stride, 672 for weekly stride.",
+    )
     parser.add_argument(
         "--models",
         default=None,
@@ -54,7 +66,9 @@ def main() -> int:
             encoding=args.encoding,
             horizon_steps=args.horizon_steps,
             n_folds=args.n_folds,
+            fold_stride_steps=args.fold_stride_steps,
             baseline_names=_parse_model_names(args.models),
+            submit_example_csv=args.submit_example_csv,
         )
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))

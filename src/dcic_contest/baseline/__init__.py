@@ -9,6 +9,8 @@ from dcic_contest.baseline.features import (
 from dcic_contest.baseline.gbdt import (
     LightGBMConfig,
     LightGBMDirectForecaster,
+    LightGBMRecursiveClippedHardForecaster,
+    LightGBMRecursiveClippedP95Forecaster,
     LightGBMRecursiveForecaster,
 )
 from dcic_contest.baseline.registry import (
@@ -23,6 +25,8 @@ __all__ = [
     "FeatureSpec",
     "LightGBMConfig",
     "LightGBMDirectForecaster",
+    "LightGBMRecursiveClippedHardForecaster",
+    "LightGBMRecursiveClippedP95Forecaster",
     "LightGBMRecursiveForecaster",
     "DEFAULT_BASELINE_NAMES",
     "available_baselines",

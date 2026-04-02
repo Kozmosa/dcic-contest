@@ -78,6 +78,7 @@ def run_experiment(
     encoding: str,
     horizon_steps: int,
     n_folds: int,
+    fold_stride_steps: int,
 ) -> dict[str, Any]:
     dirs = _ensure_dirs(experiment_dir)
 
@@ -88,6 +89,7 @@ def run_experiment(
         "encoding": encoding,
         "horizon_steps": horizon_steps,
         "n_folds": n_folds,
+        "fold_stride_steps": fold_stride_steps,
         "experiment_dir": str(experiment_dir),
     }
     _write_json(dirs["configs"] / "experiment_config.json", config_payload)
@@ -99,7 +101,9 @@ def run_experiment(
             encoding=encoding,
             horizon_steps=horizon_steps,
             n_folds=n_folds,
+            fold_stride_steps=fold_stride_steps,
             baseline_names=[baseline_name],
+            submit_example_csv=submit_example_csv,
         )
     )
 
@@ -155,6 +159,12 @@ def main() -> int:
     parser.add_argument("--encoding", default="gb18030")
     parser.add_argument("--horizon-steps", type=int, default=96)
     parser.add_argument("--n-folds", type=int, default=3)
+    parser.add_argument(
+        "--fold-stride-steps",
+        type=int,
+        default=96,
+        help="Spacing between backtest windows in 15-minute steps. Use 96 for daily stride, 672 for weekly stride.",
+    )
     args = parser.parse_args()
 
     summary = run_experiment(
@@ -165,6 +175,7 @@ def main() -> int:
         encoding=args.encoding,
         horizon_steps=args.horizon_steps,
         n_folds=args.n_folds,
+        fold_stride_steps=args.fold_stride_steps,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     return 0

@@ -3,6 +3,8 @@ from __future__ import annotations
 from dcic_contest.baseline.base import BaselineForecaster
 from dcic_contest.baseline.gbdt import (
     LightGBMDirectForecaster,
+    LightGBMRecursiveClippedHardForecaster,
+    LightGBMRecursiveClippedP95Forecaster,
     LightGBMRecursiveForecaster,
 )
 from dcic_contest.baseline.naive import (
@@ -24,6 +26,8 @@ _FORECASTERS: dict[str, type[BaselineForecaster]] = {
     WeekdaySlotMeanForecaster.name: WeekdaySlotMeanForecaster,
     LightGBMDirectForecaster.name: LightGBMDirectForecaster,
     LightGBMRecursiveForecaster.name: LightGBMRecursiveForecaster,
+    LightGBMRecursiveClippedP95Forecaster.name: LightGBMRecursiveClippedP95Forecaster,
+    LightGBMRecursiveClippedHardForecaster.name: LightGBMRecursiveClippedHardForecaster,
 }
 
 

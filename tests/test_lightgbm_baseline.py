@@ -22,6 +22,8 @@ from dcic_contest.baseline.features import FeatureSpec
 from dcic_contest.baseline.gbdt import (
     LightGBMConfig,
     LightGBMDirectForecaster,
+    LightGBMRecursiveClippedHardForecaster,
+    LightGBMRecursiveClippedP95Forecaster,
     LightGBMRecursiveForecaster,
 )
 from dcic_contest.baseline.registry import build_forecasters
@@ -67,6 +69,7 @@ class LightGBMRecursiveForecasterTest(unittest.TestCase):
                     lag_steps=(1, 2),
                     rolling_windows=(2,),
                     rolling_stats=("mean",),
+                    same_slot_windows_days=(),
                 )
             )
         )
@@ -90,6 +93,7 @@ class LightGBMRecursiveForecasterTest(unittest.TestCase):
                     lag_steps=(1,),
                     rolling_windows=(2,),
                     rolling_stats=("mean",),
+                    same_slot_windows_days=(),
                 )
             )
         )
@@ -110,11 +114,43 @@ class LightGBMRecursiveForecasterTest(unittest.TestCase):
         self.assertEqual(fake_regressor.last_seen_values[1], 1.0)
 
     def test_registry_builds_lightgbm_forecaster(self) -> None:
-        forecasters = build_forecasters(["lightgbm_recursive", "lightgbm_direct"])
+        forecasters = build_forecasters(
+            [
+                "lightgbm_recursive",
+                "lightgbm_recursive_clipped_p95",
+                "lightgbm_recursive_clipped_hard",
+                "lightgbm_direct",
+            ]
+        )
 
-        self.assertEqual(len(forecasters), 2)
+        self.assertEqual(len(forecasters), 4)
         self.assertEqual(forecasters[0].name, "lightgbm_recursive")
-        self.assertEqual(forecasters[1].name, "lightgbm_direct")
+        self.assertEqual(forecasters[1].name, "lightgbm_recursive_clipped_p95")
+        self.assertEqual(forecasters[2].name, "lightgbm_recursive_clipped_hard")
+        self.assertEqual(forecasters[3].name, "lightgbm_direct")
+
+    def test_clipped_variants_clip_predictions_to_recent_history(self) -> None:
+        train_rows = make_rows(
+            datetime(2024, 1, 1, 0, 0),
+            [float(idx) for idx in range(1, 2001)],
+        )
+        future_rows = make_rows(datetime(2024, 1, 21, 20, 0), [0.0])
+        for forecaster in (
+            LightGBMRecursiveClippedP95Forecaster(),
+            LightGBMRecursiveClippedHardForecaster(),
+        ):
+            fake_regressor = FakeRegressor()
+            with patch.object(
+                forecaster, "_build_regressor", return_value=fake_regressor
+            ):
+                predictions = forecaster.predict(
+                    ForecastContext(
+                        train_rows=train_rows,
+                        future_rows=future_rows,
+                        horizon_steps=1,
+                    )
+                )
+            self.assertLessEqual(predictions[0], max(row["V"] for row in train_rows))
 
 
 @unittest.skipUnless(
@@ -139,8 +175,7 @@ class LightGBMDirectForecasterTest(unittest.TestCase):
                     lag_steps=(1, 7),
                     rolling_windows=(2, 4),
                     rolling_stats=("mean",),
-                    same_weekday_slot_windows=(2,),
-                    same_slot_day_windows=(7, 14),
+                    same_slot_windows_days=(),
                 )
             )
         )
