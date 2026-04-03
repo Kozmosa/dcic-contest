@@ -23,3 +23,6 @@ venv/
 .env.*
 docs/ComputeMachine.md
 .worktrees/
+
+# TSLib
+Time-Series-Library/
