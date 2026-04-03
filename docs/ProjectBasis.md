@@ -28,6 +28,7 @@
 - `src/`：项目源代码。
 - `submissions/`：各个 release 的交付物目录。
 - `tests/`：单元测试与集成测试。
+- `autoresearches/`: 基于 Karparthy autoresearch 框架的自动实验目录, 包含的每个子目录都是自洽的 autoresearch project.
 
 ## 文档规则
 
